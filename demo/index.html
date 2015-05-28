@@ -1,0 +1,101 @@
+<!doctype html>
+<!--
+  This file was adapted from the Polymer Project. Plastikit is not affiliated with the original
+  authors.
+  
+  The original copyright notice is below.
+-->
+<!--
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <title>plastik-drawer demo</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../paper-styles/paper-styles.html">
+    <link rel="stylesheet" href="../../paper-styles/demo.css">
+
+    <link rel="import" href="../../paper-button/paper-button.html">
+    <link rel="import" href="../plastik-drawer.html">
+
+    <style is="custom-style">
+      
+      #plastikDrawer {
+        --plastik-drawer-height: 50%;
+        --plastik-drawer-width: 50%;
+      }
+
+      #plastikDrawer [main] {
+        background-color: var(--google-grey-100);
+      }
+
+      #plastikDrawer [drawer] {
+        border-right: 1px solid var(--google-grey-300);
+      }
+
+      #plastikDrawer[right-drawer] [drawer] {
+        border-left: 1px solid var(--google-grey-300);
+      }
+
+      paper-button {
+        color: white;
+        margin: 10px;
+        background-color: var(--google-blue-700);
+        white-space: nowrap;
+      }
+
+    </style>
+  </head>
+
+  <body>
+
+    <plastik-drawer id="plastikDrawer" overhang="0" attach-to="bottom">
+      <div drawer></div>
+      <div main>
+        <div>
+          <paper-button onclick="flipDrawer()" raised>flip drawer</paper-button>
+        </div>
+        <div>
+          <paper-button plastik-drawer-toggle raised>toggle drawer</paper-button>
+        </div>
+      </div>
+    </plastik-drawer>
+
+    <script>
+      (function(global) {
+
+        'use strict';
+
+        var DRAWER_ATTR = 'attach-to';
+
+        var pd = document.getElementById('plastikDrawer');
+
+        global.flipDrawer = function() {
+          var attr;
+          if (!pd.hasAttribute(DRAWER_ATTR) || (attr = pd.getAttribute(DRAWER_ATTR)) === 'bottom') {
+            pd.setAttribute(DRAWER_ATTR, 'right');
+          } else if (attr === 'right') {
+            pd.setAttribute(DRAWER_ATTR, 'top');
+          } else if (attr === 'top') {
+            pd.setAttribute(DRAWER_ATTR, 'left');
+          } else if (attr === 'left') {
+            pd.setAttribute(DRAWER_ATTR, 'bottom');
+          }
+        }
+
+      }(this));
+    </script>
+
+  </body>
+</html>

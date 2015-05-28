@@ -1,0 +1,598 @@
+<!--
+  This file was adapted from the Polymer Project. Plastikit is not affiliated with the original
+  authors.
+  
+  The original copyright notice is below.
+-->
+<!--
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
+
+<!--
+`plastik-drawer` contains a drawer panel and a main panel.  The drawer
+and the main panel are side-by-side with drawer on the left.  When the browser
+window size is smaller than the `responsiveWidth`, `plastik-drawer`
+changes to narrow layout.  In narrow layout, the drawer will be stacked on top
+of the main panel.  The drawer will slide in/out to hide/reveal the main
+panel.
+
+Use the attribute `drawer` to indicate that the element is the drawer panel and
+`main` to indicate that the element is the main panel.
+
+Example:
+
+    <plastik-drawer>
+      <div drawer> Drawer panel... </div>
+      <div main> Main panel... </div>
+    </plastik-drawer>
+
+The drawer and the main panels are not scrollable.  You can set CSS overflow
+property on the elements to make them scrollable or use `paper-header-panel`.
+
+Example:
+
+    <plastik-drawer>
+      <paper-header-panel drawer>
+        <paper-toolbar></paper-toolbar>
+        <div> Drawer content... </div>
+      </paper-header-panel>
+      <paper-header-panel main>
+        <paper-toolbar></paper-toolbar>
+        <div> Main content... </div>
+      </paper-header-panel>
+    </plastik-drawer>
+
+An element that should toggle the drawer will automatically do so if it's
+given the `paper-drawer-toggle` attribute.  Also this element will automatically
+be hidden in wide layout.
+
+Example:
+
+    <plastik-drawer>
+      <paper-header-panel drawer>
+        <paper-toolbar>
+          <div>Application</div>
+        </paper-toolbar>
+        <div> Drawer content... </div>
+      </paper-header-panel>
+      <paper-header-panel main>
+        <paper-toolbar>
+          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <div>Title</div>
+        </paper-toolbar>
+        <div> Main content... </div>
+      </paper-header-panel>
+    </plastik-drawer>
+
+To position the drawer to the right, add `right-drawer` attribute.
+
+    <plastik-drawer right-drawer>
+      <div drawer> Drawer panel... </div>
+      <div main> Main panel... </div>
+    </plastik-drawer>
+
+Styling plastik-drawer:
+
+To change the main container:
+  plastik-drawer {
+    --plastik-drawer-main-container: {
+      background-color: gray;
+    };
+  }
+
+To change the drawer container when it's in the left side:
+  plastik-drawer {
+    --plastik-drawer-left-drawer-container: {
+      background-color: white;
+    };
+  }
+
+To change the drawer container when it's in the right side:
+
+  plastik-drawer {
+    --plastik-drawer-right-drawer-container: {
+      background-color: white;
+    };
+  }
+
+@group Paper elements
+@element plastik-drawer
+@demo demo/index.html
+@hero hero.svg
+-->
+
+<dom-module id="plastik-drawer">
+  <link rel="import" type="css" href="plastik-drawer.css">
+
+  <template>
+    <iron-selector
+        attr-for-selected="id"
+        class$="[[_computeIronSelectorClass(transition, dragging, attachTo)]]"
+        activate-event=""
+        selected="[[selected]]">
+
+      <div id="main">
+        <content select="[main]"></content>
+        <div id="scrim" on-tap="closeDrawer"></div>
+      </div>
+
+      <div id="drawer">
+        <content select="[drawer]"></content>
+      </div>
+
+    </iron-selector>
+  </template>
+
+</dom-module>
+
+<script>
+
+  (function() {
+
+    'use strict';
+
+   // this would be the only `plastik-drawer` in
+   // the whole app that can be in `dragging` state
+    var sharedPanel = null;
+
+    function classNames(obj) {
+      var classes = [];
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && obj[key]) {
+          classes.push(key);
+        }
+      }
+
+      return classes.join(' ');
+    }
+
+    Polymer({
+
+      is: 'plastik-drawer',
+
+      /**
+       * Fired when the selected panel changes.
+       *
+       * Listening for this event is an alternative to observing changes in the `selected` attribute.
+       * This event is fired both when a panel is selected and deselected.
+       * The `isSelected` detail property contains the selection state.
+       *
+       * @event plastik-select {{isSelected: boolean, item: Object}} detail -
+       *     isSelected: True for selection and false for deselection.
+       *     item: The panel that the event refers to.
+       */
+
+      properties: {
+
+        /**
+         * The panel to be selected by default.
+         */
+        defaultSelected: {
+          type: String,
+          value: 'main'
+        },
+
+        /**
+         * If true, swipe from the edge is disabled.
+         */
+        disableEdgeSwipe: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, swipe to open/close the drawer is disabled.
+         */
+        disableSwipe: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * Whether the user is dragging the drawer interactively.
+         */
+        dragging: {
+          type: Boolean,
+          value: false,
+          readOnly: true,
+          notify: true
+        },
+
+        /**
+         * How many pixels on the side of the screen are sensitive to edge
+         * swipes and peek.
+         */
+        edgeSwipeSensitivity: {
+          type: Number,
+          value: 30
+        },
+
+        /**
+         * Whether the browser has support for the transform CSS property.
+         */
+        hasTransform: {
+          type: Boolean,
+          value: function() {
+            return 'transform' in this.style;
+          }
+        },
+
+        /**
+         * Whether the browser has support for the will-change CSS property.
+         */
+        hasWillChange: {
+          type: Boolean,
+          value: function() {
+            return 'willChange' in this.style;
+          }
+        },
+
+        /**
+         * Whether the drawer is peeking out from the edge.
+         */
+        peeking: {
+          type: Boolean,
+          value: false,
+          readOnly: true,
+          notify: true
+        },
+        
+        /**
+         * Sets the minimum amount by which the drawer should extend at all times.
+         * Overrides edge-peek functionality.
+         */
+         overhang: {
+           type: Number,
+           value: 0
+         },
+
+        /**
+         * Sets the side on which to attach the drawer. Accepted values are `top`, `left`,
+         * `bottom`, and `right`.
+         */
+        attachTo: {
+          type: String,
+          value: 'left'
+        },
+
+        /**
+         * The panel that is being selected. `drawer` for the drawer panel and
+         * `main` for the main panel.
+         */
+        selected: {
+          reflectToAttribute: true,
+          type: String,
+          value: null
+        },
+
+        /**
+         * The attribute on elements that should toggle the drawer on tap, also elements will
+         * automatically be hidden in wide layout.
+         */
+        drawerToggleAttribute: {
+          type: String,
+          value: 'plastik-drawer-toggle'
+        },
+
+        /**
+         * Whether the transition is enabled.
+         */
+        transition: {
+          type: Boolean,
+          value: false
+        },
+
+      },
+      
+      observers: [
+        '_attachToChanged(attachTo, defaultSelected)',
+        '_layoutUpdated(attachTo, overhang, selected)'
+      ],
+
+      listeners: {
+        tap: '_onTap',
+        track: '_onTrack',
+        down: '_downHandler',
+        up: '_upHandler'
+      },
+
+      /**
+       * Toggles the panel open and closed.
+       *
+       * @method togglePanel
+       */
+      togglePanel: function() {
+        if (this._isMainSelected()) {
+          this.openDrawer();
+        } else {
+          this.closeDrawer();
+        }
+      },
+
+      /**
+       * Opens the drawer.
+       *
+       * @method openDrawer
+       */
+      openDrawer: function() {
+        this.selected = 'drawer';
+      },
+
+      /**
+       * Closes the drawer.
+       *
+       * @method closeDrawer
+       */
+      closeDrawer: function() {
+        this.selected = 'main';
+      },
+
+      ready: function() {
+        // Avoid transition at the beginning e.g. page loads and enable
+        // transitions only after the element is rendered and ready.
+        this.transition = true;
+      },
+
+      _computeIronSelectorClass: function(transition, dragging, attachTo) {
+        return classNames({
+          dragging: dragging,
+          'top-drawer': attachTo == 'top',
+          'bottom-drawer': attachTo == 'bottom',
+          'left-drawer': attachTo == 'left',
+          'right-drawer': attachTo == 'right',
+          transition: transition
+        });
+      },
+
+      _computeDrawerStyle: function(overhang) {
+        if (overhang && !this.dragging && !this.peeking) {
+          return 'transform: translate' + this._axis.toUpperCase() + '(' + this._sign +
+          (this._isMainSelected() ? this.overhang + 'px' : '100%')
+           + ')';
+        }
+      },
+
+      _computeSwipeOverlayHidden: function(disableEdgeSwipe) {
+        return disableEdgeSwipe;
+      },
+
+      _onTrack: function(e) {
+        console.log('_onTrack', e, 'sharedPanel', sharedPanel);
+        if (sharedPanel && this !== sharedPanel) {
+          return;
+        }
+        switch (e.detail.state) {
+          case 'start':
+            this._trackStart(e);
+            break;
+          case 'track':
+            this._track(e);
+            break;
+          case 'end':
+            this._trackEnd(e);
+            break;
+        }
+
+      },
+
+      _swipeAllowed: function() {
+        return !this.disableSwipe;
+      },
+
+      _isMainSelected: function() {
+        return this.selected === 'main';
+      },
+
+      _startEdgePeek: function() {
+        this.width = this.$.drawer.offsetWidth;
+        this.height = this.$.drawer.offsetHeight;
+        !this.overhang && this._moveDrawer(this._translateForDelta(
+          this._sign ? -this.edgeSwipeSensitivity : this.edgeSwipeSensitivity));
+        this._setPeeking(true);
+      },
+
+      _stopEdgePeek: function() {
+        if (this.peeking) {
+          this._setPeeking(false);
+          this._moveDrawer(null);
+        }
+      },
+
+      _downHandler: function(e) {
+        console.log('_downHandler', e, 'dragging', this.dragging, 'isMainSelected', this._isMainSelected(), 'isEdgeTouch', this._isEdgeTouch(e), 'sharedPanel', sharedPanel);
+        if (!this.dragging && this._isMainSelected() && this._isEdgeTouch(e) && !sharedPanel) {
+          this._startEdgePeek();
+          // grab this panel
+          sharedPanel = this;
+        }
+      },
+
+      _upHandler: function() {
+        this._stopEdgePeek();
+        // release the panel
+        sharedPanel = null;
+      },
+
+      _onTap: function(e) {
+        var targetElement = Polymer.dom(e).localTarget;
+        var isTargetToggleElement = targetElement &&
+          this.drawerToggleAttribute &&
+          targetElement.hasAttribute(this.drawerToggleAttribute);
+
+        if (isTargetToggleElement) {
+          this.togglePanel();
+        }
+      },
+
+      _isEdgeTouch: function(e) {
+        if (this.disableEdgeSwipe || !this._swipeAllowed()) {
+          return false;
+        }
+        
+        var x = e.detail.x, y = e.detail.y, isEdgeTouch = false;
+        
+        if (this.attachTo == 'top') {
+          isEdgeTouch = y <= (this.overhang || this.edgeSwipeSensitivity);
+        } else if (this.attachTo == 'bottom') {
+          isEdgeTouch = y >= this.offsetHeight - (this.overhang || this.edgeSwipeSensitivity);
+        } else if (this.attachTo == 'left') {
+          isEdgeTouch = x <= (this.overhang || this.edgeSwipeSensitivity);
+        } else if (this.attachTo == 'right') {
+          isEdgeTouch = x >= this.offsetWidth - (this.overhang || this.edgeSwipeSensitivity);
+        }
+        
+        return isEdgeTouch;
+      },
+
+      _trackStart: function() {
+        if (this._swipeAllowed()) {
+          sharedPanel = this;
+          this._setDragging(true);
+
+          if (this._isMainSelected()) {
+            this._setDragging(this.peeking || this._isEdgeTouch(event));
+          }
+
+          if (this.dragging) {
+            this.width = this.$.drawer.offsetWidth;
+            this.height = this.$.drawer.offsetHeight;
+            this.transition = false;
+          }
+        }
+        console.log('_trackStart', this.width, this.height, 'dragging', this.dragging, 'peeking', this.peeking, 'isEdgeTouch', this._isEdgeTouch(event), 'isMainSelected', this._isMainSelected(), 'event', event);
+      },
+
+      _translateForDelta: function(delta) {
+        var isMain = this._isMainSelected();
+        console.log('_translateForDelta', delta, 'isMain', isMain, 'width', this.width, 'height', this.height);
+
+        if (this.attachTo == 'top') {
+          return Math.max(this.overhang || 0, Math.min(this.height, isMain ? delta + (this.overhang || 0) : this.height + delta));
+        } else if (this.attachTo == 'bottom') {
+          return Math.max(-this.height, Math.min(-this.overhang || 0, isMain ? delta - (this.overhang || 0) : delta - this.height));
+        } else if (this.attachTo == 'left') {
+          return Math.max(this.overhang || 0, Math.min(this.width, isMain ? delta + (this.overhang || 0) : this.width + delta));
+        } else if (this.attachTo == 'right') {
+          return Math.max(-this.width, Math.min(-this.overhang || 0, isMain ? delta - (this.overhang || 0) : delta - this.width));
+        }
+      },
+
+      _transformForTranslate: function(translate) {  
+        console.log('_transformForTranslate', translate);      
+        if (translate === null) {
+          var main = this._isMainSelected();
+          if (main && !this.overhang) {
+            return '';
+          }
+          var dist = this._sign + (main ? this.overhang + 'px' : '100%');
+          var axis = this._axis.toUpperCase();
+          return this.hasWillChange ? 'translate' + axis + '(' + dist + ')' :
+            'translate3d(' + (axis === 'Y' ? '0, ' + dist : dist + ', 0') + ', 0)';
+        }
+        
+        if (this._axis === 'y') {
+          return this.hasWillChange ? 'translateY(' + translate + 'px)' :
+              'translate3d(0, ' + translate + 'px, 0)';          
+        } else {
+          return this.hasWillChange ? 'translateX(' + translate + 'px)' :
+              'translate3d(' + translate + 'px, 0, 0)';
+        }
+      },
+
+      _track: function(e) {
+        if (this.dragging) {
+          var d = (this._axis === 'y') ? e.detail.dy : e.detail.dx;
+
+          if (this.peeking) {
+            if (Math.abs(d) <= this.edgeSwipeSensitivity) {
+              // Ignore track until we move past the edge peek.
+              this._moveDrawer(null);
+              return;
+            }
+            this._setPeeking(false);
+          }
+
+          this._moveDrawer(this._translateForDelta(d));
+        }
+      },
+
+      _trackEnd: function(e) {
+        console.log('_trackEnd', e.detail.dx, e.detail.dy, 'dragging', this.dragging, 'peeking', this.peeking);
+        if (this.dragging) {
+          var xDirection = e.detail.dx > 0;
+          var yDirection = e.detail.dy > 0;
+
+          this._setDragging(false);
+          this.transition = true;
+          sharedPanel = null;
+          this._moveDrawer(null);
+
+          if (this.attachTo == 'top') {
+            this[yDirection ? 'openDrawer' : 'closeDrawer']();
+          } else if (this.attachTo == 'bottom') {
+            this[yDirection ? 'closeDrawer' : 'openDrawer']();
+          } else if (this.attachTo == 'left') {
+            this[xDirection ? 'openDrawer' : 'closeDrawer']();
+          } else if (this.attachTo == 'right') {
+            this[xDirection ? 'closeDrawer' : 'openDrawer']();
+          }
+        }
+      },
+
+      _moveDrawer: function(translate) {
+        var s = this.$.drawer.style;
+
+        if (this.hasTransform) {
+          s.transform = this._transformForTranslate(translate);
+        } else {
+          s.webkitTransform = this._transformForTranslate(translate);
+        }
+      },
+      
+      _attachToChanged: function(attachTo, defaultSelected) {
+        if (!attachTo || typeof attachTo !== 'string') {
+          this.attachTo = 'left';
+        } else {
+          var attachToLower = attachTo.toLowerCase().trim();
+          
+          if (attachToLower === 'left' ||
+              attachToLower === 'right' ||
+              attachToLower === 'top' ||
+              attachToLower === 'bottom') {
+            if (attachToLower !== attachTo) {
+              this.attachTo = attachToLower;
+            }
+          } else {
+            this.attachTo = 'left';
+          }
+        }
+        
+        this.selected = this.defaultSelected;
+        this.setScrollDirection(this._swipeAllowed() ? (this._axis === 'y' ? 'x' : 'y') : 'all');
+      },
+      
+      _layoutUpdated: function() {
+        this._moveDrawer(null);
+      },
+      
+      get _axis() {
+        return (this.attachTo == 'top' || this.attachTo == 'bottom') ? 'y' : 'x';
+      },
+      
+      get _sign() {
+        return (this.attachTo == 'bottom' || this.attachTo == 'right') ? '-' : '';
+      }
+      
+    });
+
+  }());
+
+</script>

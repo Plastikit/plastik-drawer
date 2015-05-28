@@ -1,0 +1,217 @@
+/**
+@license
+This file was adapted from the Polymer Project. Plastikit is not affiliated with the original
+authors.
+
+The original copyright notice is below.
+
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+
+*/
+:host {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+iron-selector > #drawer {
+  position: absolute;
+  background-color: white;
+  will-change: transform;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+
+  @apply(--plastik-drawer-drawer-container);
+}
+
+.transition > #drawer {
+  transition: -webkit-transform ease-in-out 0.3s, width ease-in-out 0.3s, height ease-in-out 0.3s;
+  transition: transform ease-in-out 0.3s, width ease-in-out 0.3s, height ease-in-out 0.3s;
+}
+
+.left-drawer > #drawer {
+  top: 0;
+  left: auto;
+  right: 100%;
+  
+  height: 100%;
+  width: var(--plastik-drawer-width, 200px);
+  @apply(--plastik-drawer-left-drawer-container);
+}
+
+.right-drawer > #drawer {
+  right: auto;
+  left: 100%;
+
+  height: 100%;
+  -webkit-transform-origin: right;
+  transform-origin: right;
+  width: var(--plastik-drawer-width, 200px);
+  @apply(--plastik-drawer-right-drawer-container);
+}
+
+.top-drawer > #drawer {
+  top: auto;
+  bottom: 100%;
+
+  width: 100%;
+  -webkit-transform-origin: top;
+  transform-origin: top;
+  height: var(--plastik-drawer-height, 200px);
+  @apply(--plastik-drawer-top-drawer-container);
+}
+
+.bottom-drawer > #drawer {
+  top: 100%;
+  bottom: auto;
+
+  width: 100%;
+  -webkit-transform-origin: bottom;
+  transform-origin: bottom;
+  height: var(--plastik-drawer-height, 200px);
+  @apply(--plastik-drawer-bottom-drawer-container);
+}
+
+iron-selector > #main {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  @apply(--plastik-drawer-main-container);
+}
+
+.transition > #main {
+  transition: left ease-in-out 0.3s, padding ease-in-out 0.3s;
+}
+
+.right-drawer > #main {
+  left: 0;
+}
+
+.bottom-drawer > #main {
+  top: 0;
+}
+
+.top-drawer > #main {
+  bottom: 0;
+}
+
+.right-drawer.transition > #main {
+  transition: right ease-in-out 0.3s, padding ease-in-out 0.3s;
+}
+
+.bottom-drawer.transition > #main {
+  transition: bottom ease-in-out 0.3s, padding ease-in-out 0.3s;
+}
+
+.top-drawer.transition > #main {
+  transition: top ease-in-out 0.3s, padding ease-in-out 0.3s;
+}
+
+#main > ::content > [main] {
+  height: 100%;
+}
+
+#drawer > ::content > [drawer] {
+  height: 100%;
+}
+
+#scrim {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity ease-in-out 0.38s, visibility ease-in-out 0.38s;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+    
+.left-drawer > #drawer.iron-selected, .left-drawer.dragging #drawer {
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.right-drawer > #drawer.iron-selected, .right-drawer.dragging > #drawer {
+  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.top-drawer > #drawer.iron-selected, .top-drawer.dragging > #drawer {
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.bottom-drawer > #drawer.iron-selected, .bottom-drawer.dragging > #drawer {
+  box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.15);
+}
+
+#drawer > ::content > [drawer] {
+  border: 0;
+}
+
+.left-drawer > #drawer:not(.iron-selected) {
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+}
+
+.right-drawer > #drawer:not(.iron-selected) {
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+}
+
+.top-drawer > #drawer:not(.iron-selected) {
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+}
+
+.bottom-drawer > #drawer:not(.iron-selected) {
+  left: auto;
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+}
+
+#main {
+  left: 0 !important;
+  padding: 0;
+}
+
+.right-drawer > #main {
+  left: 0;
+  right: 0;
+  padding: 0;
+}
+
+.top-drawer > #main {
+  top: 0;
+  padding: 0;
+}
+
+.bottom-drawer > #main {
+  top: 0;
+  bottom: 0;
+  padding: 0;
+}
+
+#main:not(.iron-selected) > #scrim,
+.dragging > #main > #scrim {
+  visibility: visible;
+  opacity: var(--plastik-drawer-scrim-opacity, 1);
+}
+
+#main > * {
+  margin: 0;
+  min-height: 100%;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}

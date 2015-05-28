@@ -1,0 +1,31 @@
+{
+  "name": "plastik-drawer",
+  "version": "0.0.0",
+  "description": "Sliding drawer that can attach to any edge of the viewport",
+  "authors": [
+    "The Plastikit Authors <developers@plastikit.org>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "drawer"
+  ],
+  "main": "index.html",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Plastikit/plastik-drawer.git"
+  },
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/Plastikit/plastik-drawer",
+  "dependencies": {
+    "iron-selector": "PolymerElements/iron-selector#^1.0.0",
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "paper-button": "PolymerElements/paper-button#^1.0.0",
+    "paper-styles": "PolymerElements/paper-styles#^1.0.0",
+    "web-component-tester": "*",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  }
+}
