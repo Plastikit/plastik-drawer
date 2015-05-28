@@ -365,7 +365,7 @@ To change the drawer container when it's in the right side:
       },
 
       _onTrack: function(e) {
-        console.log('_onTrack', e, 'sharedPanel', sharedPanel);
+        //console.log('_onTrack', e, 'sharedPanel', sharedPanel);
         if (sharedPanel && this !== sharedPanel) {
           return;
         }
@@ -407,7 +407,7 @@ To change the drawer container when it's in the right side:
       },
 
       _downHandler: function(e) {
-        console.log('_downHandler', e, 'dragging', this.dragging, 'isMainSelected', this._isMainSelected(), 'isEdgeTouch', this._isEdgeTouch(e), 'sharedPanel', sharedPanel);
+        //console.log('_downHandler', e, 'dragging', this.dragging, 'isMainSelected', this._isMainSelected(), 'isEdgeTouch', this._isEdgeTouch(e), 'sharedPanel', sharedPanel);
         if (!this.dragging && this._isMainSelected() && this._isEdgeTouch(e) && !sharedPanel) {
           this._startEdgePeek();
           // grab this panel
@@ -467,12 +467,12 @@ To change the drawer container when it's in the right side:
             this.transition = false;
           }
         }
-        console.log('_trackStart', this.width, this.height, 'dragging', this.dragging, 'peeking', this.peeking, 'isEdgeTouch', this._isEdgeTouch(event), 'isMainSelected', this._isMainSelected(), 'event', event);
+        //console.log('_trackStart', this.width, this.height, 'dragging', this.dragging, 'peeking', this.peeking, 'isEdgeTouch', this._isEdgeTouch(event), 'isMainSelected', this._isMainSelected(), 'event', event);
       },
 
       _translateForDelta: function(delta) {
         var isMain = this._isMainSelected();
-        console.log('_translateForDelta', delta, 'isMain', isMain, 'width', this.width, 'height', this.height);
+        //console.log('_translateForDelta', delta, 'isMain', isMain, 'width', this.width, 'height', this.height);
 
         if (this.attachTo == 'top') {
           return Math.max(this.overhang || 0, Math.min(this.height, isMain ? delta + (this.overhang || 0) : this.height + delta));
@@ -486,7 +486,7 @@ To change the drawer container when it's in the right side:
       },
 
       _transformForTranslate: function(translate) {  
-        console.log('_transformForTranslate', translate);      
+        //console.log('_transformForTranslate', translate);      
         if (translate === null) {
           var main = this._isMainSelected();
           if (main && !this.overhang) {
@@ -525,7 +525,7 @@ To change the drawer container when it's in the right side:
       },
 
       _trackEnd: function(e) {
-        console.log('_trackEnd', e.detail.dx, e.detail.dy, 'dragging', this.dragging, 'peeking', this.peeking);
+        //console.log('_trackEnd', e.detail.dx, e.detail.dy, 'dragging', this.dragging, 'peeking', this.peeking);
         if (this.dragging) {
           var xDirection = e.detail.dx > 0;
           var yDirection = e.detail.dy > 0;
